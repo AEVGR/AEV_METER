@@ -8,6 +8,8 @@ Leistungsmessgerät für Demonstrationszwecken
 * 1 x USB Kabel USB-A USB-Micro-B
 * 1 x PC mit Python 3
   * Matplotlib
-  * Serial 
+  * Serial
+ 
+![d]((https://github.com/AEVGR/AEV_METER/blob/main/doc/AEV_Meter.jpg)?raw=true)
 
-![alt text](https://github.com/AEVGR/AEV_METER/blob/doc/AEV_METER.jpg?raw=true)
+
