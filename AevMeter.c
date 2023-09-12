@@ -33,8 +33,6 @@
 
 #define NOP() asm volatile ("nop")
 
-#define EXAMPLE_ONEWIRE_BUS_GPIO    0
-#define EXAMPLE_ONEWIRE_MAX_DS18B20 2
 
 /**
  * Länge des Buffers für die Glättung der Messergebisse
