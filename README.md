@@ -1,6 +1,6 @@
 # AEV_METER
-Leistungsmessgerät für Demonstrationszwecken 
-* 7 x Shelly 20212 Erweiterungsmodule
+Leistungsmessgerät für Demonstrationszweck
+* 7 x Shelly 20212 Erweiterungsmodul
 * 2 x 1 kOhm Widerstand
 * 7 x 180 Ohm Widerstand
 * 1 x Espressif ESP32-S3-DevKitC1
