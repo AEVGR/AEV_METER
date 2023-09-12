@@ -10,4 +10,4 @@ Leistungsmessgerät für Demonstrationszwecken
   * Matplotlib
   * Serial 
 
-
+![alt text](https://github.com/AEVGR/AEV_METER/blob/doc/AEV_METER.jpg?raw=true)
