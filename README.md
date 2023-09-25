@@ -12,4 +12,5 @@ Leistungsmessgerät für Demonstrationszweck
  
 ![all text](https://github.com/AEVGR/AEV_METER/blob/main/doc/AEV_Meter.jpg?raw=true)
 
-
+![all text](https://github.com/AEVGR/AEV_METER/blob/main/doc/Bild1[1].png?raw=true)
+![all text](https://github.com/AEVGR/AEV_METER/blob/main/doc/Bild2[1].png.jpg?raw=true)
