@@ -71,17 +71,19 @@ class My_bar:
         self.axd.set_ylabel('Watt')
         self.axd.yaxis.grid(True)
         self.bar = self.axd.bar(self.label, [0, -2, 1, 1, 1, 1, 2],
-                                label=self.label, color=self.bar_colors)
-        self.axd.set_title('Leistungen Energieanhänger', fontsize=15, color='blue', fontweight='bold')
+                                label=self.label, color=self.bar_colors,capstyle='round')
+        self.axd.set_title('Leistungen Energieanhänger', fontsize=15, color=AEV_Meter.label_color, fontweight='bold')
+        
 
     def update(self, y):
-        _min = math.ceil(y[0][-1] / 5) * 5.2
+        _min = math.floor(y[0][-1] / 5) * 5.2
         _max = _min
 
         for __y in range(len(y)):
             self.bar[__y].set_height(y[__y][-1])
-            if _min > math.ceil(y[__y][-1] / 5) * 5.2:
-                _min = math.ceil(y[__y][-1] / 5) * 5.2
+   
+            if _min > math.floor(y[__y][-1] / 5) * 5.2:
+                _min = math.floor(y[__y][-1] / 5) * 5.2
             if _max < math.ceil(y[__y][-1] / 5) * 5.2:
                 _max = math.ceil(y[__y][-1] / 5) * 5.2
         self.axd.set_ylim(_min, _max)
@@ -102,21 +104,26 @@ class My_sankey:
     def update(self, y):
         self.axd.cla()
         self.axd.axis('off')
-        self.axd.set_title('Leistungen Energieanhänger', fontsize=15, color='blue', fontweight='bold')
-        sankey = (Sankey
-                  (ax=self.axd,
+        self.axd.axis('off')
+      
+  
+        self.axd.set_title('Leistungen Energieanhänger', fontsize=15, color=AEV_Meter.label_color, fontweight='bold')
+        sankey = Sankey(ax=self.axd,
                    scale=7 / (np.amax(y[-1]) - np.amin(y[-1])),
                    offset=1.2,
                    head_angle=120,
-                   shoulder=0.2,
+                   shoulder=0,
                    gap=1,
                    radius=0.3,
                    format='%i',
-                   unit=' W'))
+                   unit=' W'
+                  )
+
         for i in range(len(y)):
             pl = 1
             if i == 0:
-                sankey.add(facecolor="beige",
+                sankey.add(facecolor=AEV_Meter.sankey_color,
+                            edgecolor=AEV_Meter.sankey_color,
                            flows=[y[0][-1], y[1][-1], y[2][-1], y[3][-1], y[4][-1], y[5][-1], y[6][-1]],
                            labels=[None, None, None, None, None, None, None],
                            pathlengths=[pl, pl, pl, pl, pl, pl, pl],
@@ -132,6 +139,7 @@ class My_sankey:
                            rotation=90)
 
             sankey.add(facecolor=self.bar_colors[i],
+                       edgecolor=self.bar_colors[i],
                        flows=[-y[i][-1], y[i][-1]],
                        labels=[None, self.label[i]],
                        orientations=[0, 0],
@@ -151,12 +159,13 @@ class My_leistung:
         self.line = np.empty(len(y) + 1, matplotlib.lines.Line2D)
         for __x in range(len(y)):
             self.line[__x], = self.axd.plot(x, y[__x], label=label[__x], color=bar_colors[__x], linewidth=3)
-        self.axd.grid(True)
+        self.axd.yaxis.grid(True)
         self.axd.legend()
         self.axd.set_ylabel('Watt')
         self.axd.set_xlabel('Minuten')
-        self.axd.set_title('Leistungen', fontsize=15, color='blue', fontweight='bold')
+        self.axd.set_title('Leistungen', fontsize=15, color=AEV_Meter.label_color, fontweight='bold')
         self.axd.set_position(pos)
+        
 
     def update(self, plot_time, x, y, ):
         maxx = plot_time
@@ -191,8 +200,8 @@ class My_velo:
         self.axd.set_ylabel('Watt')
         self.axd.set_xlabel('Minuten')
         self.axd.legend()
-        self.axd.set_title('Stromvelo', fontsize=15, color='blue', fontweight='bold')
-        self.axd.grid(True)
+        self.axd.set_title('Stromvelo', fontsize=15, color=AEV_Meter.label_color, fontweight='bold')
+        self.axd.yaxis.grid(True)
 
     def update(self, plot_time, velowh, x, y):
         maxx = plot_time
@@ -219,7 +228,7 @@ class My_tacho:
     def __init__(self, axd, pos):
         self.axd = axd
         self.axd.set_position(pos)
-        self.tacho_init(axd, 44, "Stromvelo", "W", colr=cm.winter_r)
+        self.tacho_init(axd, 44, "Stromvelo", "W", colr=cm.Greens_r)
 
     @staticmethod
     def tacho_init(axes, tiks=220, titel="", einheit="W", colr=cm.viridis):
@@ -245,7 +254,7 @@ class My_tacho:
         axes.set_title(titel, y=0, horizontalalignment='center',
                        verticalalignment='center',
                        weight='bold',
-                       color='blue',
+                       color=AEV_Meter.label_color,
                        fontsize=15)
         axes.text(0.5 * (left + right), 0.3 * (bottom + top), einheit,
                   horizontalalignment='center',
@@ -291,9 +300,10 @@ class My_tacho:
 
 class My_serial:
     def __init__(self):
+        self.__myString = "1.999,1.999,1.999,1.999,1.999,1.999,1.999"
         self.port = ""
         self.g_ser = None
-        self.myString = "1.999,1.999,1.999,1.999,1.999,1.999,1.999"
+        self.myString = self.__myString
         self.xi = 0
         self.dt = 1 / 60
 
@@ -347,7 +357,7 @@ class My_serial:
         self.g_ser.dtr = self.g_ser.dtr  # usbser.sys workaround
 
     def get_url_string(self):
-        self.myString = "1.999,1.999,1.999,1.999,1.999,1.999,1.999"
+        self.myString = self.__myString
         try:
             if self.port == '':
                 self.get_usb_port()
@@ -367,7 +377,7 @@ class My_serial:
 
         except SerialException:
             # do something
-            self.myString = "1.999,1.999,1.999,1.999,1.999,1.999,1.999"
+            self.myString =self.__myString
             if not (self.g_ser is None):
                 self.g_ser.close()
             self.port = ''
@@ -387,7 +397,7 @@ class My_serial:
         return self.xi, yi
 
     def print_error(self, fig):
-        if self.myString == "1.999,1.999,1.999,1.999,1.999,1.999,1.999":
+        if self.myString == self.__myString:
             fig.suptitle('PC mit AEV_METER mittels USB Kabel verbinden', fontsize=14,
                          fontweight='bold')
             return False
@@ -401,13 +411,15 @@ class My_serial:
 
 class AEV_Meter:
     label = ['Stromvelo', 'PV Dach', 'PV Geländer', 'Netz', 'Batterie', 'Wärme Pumpe', 'Alg. Verb.']
-    bar_colors = ['tab:blue', 'tab:orange', 'Yellow', 'tab:green', 'tab:purple', 'tab:red', 'tab:olive']
+    bar_colors = ['green', 'Yellow', 'gold', 'tab:grey', 'tab:purple', 'tab:red', 'chocolate']
+    label_color= 'cornflowerblue'
+    sankey_color='cornflowerblue'
     inner = [["Velo"], ["Tacho"]]
     mosaic = [['Leistung', 'Bar', ],
               [inner, 'Sankey', ]]
-    pos_velo_tacho = Bbox([[0.037, 0.05], [0.50, 0.42]])
+    pos_velo_tacho = Bbox([[0.04, 0.05], [0.50, 0.42]])
     pos_sankey_bar = Bbox([[0.54, 0.05], [0.96, 0.96]])
-    pos_leistung = Bbox([[0.037, 0.5], [0.50, 0.96]])
+    pos_leistung = Bbox([[0.04, 0.5], [0.50, 0.96]])
     plot_time = 15
     velowh = 0
     x: [float]
@@ -466,41 +478,41 @@ def main():
     plt.show()
 
     while True:
-        # try:
-        xi, yi = my_serial.get_x_y()
+        try:
+            xi, yi = my_serial.get_x_y()
 
-        if my_serial.print_error(fig):
-            aev_meter.save_x_y(xi, yi)
-            my_leistung.update(aev_meter.plot_time, aev_meter.x, aev_meter.y)
-            my_velo.update(aev_meter.plot_time, aev_meter.velowh, aev_meter.x, aev_meter.y)
-            aev_meter.update_wh()
-            my_bar.update(aev_meter.y)
-            my_sankey.update(aev_meter.y)
-            my_tacho.update(axd['Tacho'], aev_meter.y[0][-1], aev_meter.y, 8)
+            if my_serial.print_error(fig):
+                aev_meter.save_x_y(xi, yi)
+                my_leistung.update(aev_meter.plot_time, aev_meter.x, aev_meter.y)
+                my_velo.update(aev_meter.plot_time, aev_meter.velowh, aev_meter.x, aev_meter.y)
+                aev_meter.update_wh()
+                my_bar.update(aev_meter.y)
+                my_sankey.update(aev_meter.y)
+                my_tacho.update(axd['Tacho'], aev_meter.y[0][-1], aev_meter.y, 8)
 
-        if xi > aev_meter.plot_time:
-            aev_meter.remove_x_y()
+            if xi > aev_meter.plot_time:
+                aev_meter.remove_x_y()
 
-        if my_click.is_onof():
-            my_tacho.set_visible(False)
-            my_velo.set_visible(True)
-        else:
-            my_tacho.set_visible(True)
-            my_velo.set_visible(False)
+            if my_click.is_onof():
+                my_tacho.set_visible(False)
+                my_velo.set_visible(True)
+            else:
+                my_tacho.set_visible(True)
+                my_velo.set_visible(False)
 
-        if my_click.is_bar():
-            my_sankey.set_visible(False)
-            my_bar.set_visible(True)
-        else:
-            my_sankey.set_visible(True)
-            my_bar.set_visible(False)
+            if my_click.is_bar():
+                my_sankey.set_visible(False)
+                my_bar.set_visible(True)
+            else:
+                my_sankey.set_visible(True)
+                my_bar.set_visible(False)
 
-        aev_meter.draw_flush_events(fig)
-        if not plt.get_fignums():
-            break
+            aev_meter.draw_flush_events(fig)
+            if not plt.get_fignums():
+                break
 
-    # except:
-    #     print("Error")
+        except:
+            print("Error")
 
 
 main()
