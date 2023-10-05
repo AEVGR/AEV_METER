@@ -36,7 +36,7 @@
 /**
  * Länge des Buffers für die Glättung der Messergebisse
  */
-#define pufferSize  7
+#define pufferSize  8
 /**
  * Anzahl der Sensoren bzw ADC Wandler
  */
@@ -49,27 +49,27 @@ uint8_t adcNrArray[numSens] = { ADC_CHANNEL_3, ADC_CHANNEL_4, ADC_CHANNEL_5,
 /**
  * Werte der letzten Messungen für die Glättung
  */
-float adcHistArray[numSens][pufferSize];
+double adcHistArray[numSens][pufferSize];
 
 /**
  * letzte gemessene Werte
  */
-float adcArray[numSens];
-/**
- * Umrechung der gemessenen Werte in Watt2
- */
 
-double filterArray[numSens];
+
 
 double fx(double x) {
 	//return x*0.0214490;
 	//return x;
-	if (x < 0) {
-		return 2.237637E-14 * x * x * x + 1.111419E-8 * x * x + 0.0207136 * x;
+	return 0.01812*x+0.69101;
+//	if (x < 0) {
+//		return 1.06780466719172E-13*x*x*x+3.13586051499389E-8*x*x+0.0199928360769083*x ;
+	//	return 2.237637E-14 * x * x * x + 1.111419E-8 * x * x + 0.0207136 * x;
 
-	} else {
-		return 1.383418E-14 * x * x * x - 1.1124131E-8 * x * x + 0.0230523 * x;
-	}
+//	} else {
+//		return 1.10884168449676E-13*x*x*x-3.23957124265805E-8*x*x+0.0200734734550867*x;
+//		return 1.383418E-14 * x * x * x - 1.1124131E-8 * x * x + 0.0230523 * x;
+	//}
+
 
 }
 /**
@@ -101,23 +101,33 @@ void delayMicroseconds(uint32_t us) {
 double getl(size_t xi) {
 	double ret = 0;
 	double min = DBL_MAX;
-	double max = DBL_MIN;
+	double max = DBL_MAX*-1;
 
 	for (size_t x = 0; x < pufferSize; ++x) {
 		min = min > adcHistArray[xi][x] ? adcHistArray[xi][x] : min;
 		max = max < adcHistArray[xi][x] ? adcHistArray[xi][x] : max;
-
 		ret = ret + adcHistArray[xi][x];
-	}
-	ret = ret - min - max;
-	ret = fx((ret / (pufferSize - 2)));
 
-	ret = fabs(ret) < 5 ? ((1.0 * rand()) / RAND_MAX) * -1 : ret;
+	}
+
+//	printf("\r\n min %lf max %lf ret %lf \r\n",min,max,ret/(pufferSize -2));
+
+	ret = ret - min - max;
+	//return ret/(pufferSize -2);
+	//printf("%lf \r\n ",ret / (pufferSize -2));
+	ret = fx((ret / (pufferSize -2)));
+
+	ret = (fabs(ret) < 5 )? ((-1.0 * rand()) / RAND_MAX)  : ret;
+
+	ret=round(ret/5)*5;
 
 	return ret;
 }
 double imgToPol(double imag, double real) {
 	double winkel;
+	if (real==0)real=0.00001;
+	if (imag==0)imag=0.00001;
+
 	winkel = 2 * atan(imag / (sqrt(real * real + imag * imag) + real));
 	return winkel;
 }
@@ -139,7 +149,10 @@ double goertzel(int numSamples, int TARGET_FREQUENCY, int SAMPLING_RATE,
 	coeff = 2.0 * cosine;
 	q0 = 0;
 	q1 = 0;
-	q2 = 0;
+	q2 = 0;	for (int a = 0; a < 10; ++a) {
+
+
+	}
 
 	for (i = 0; i < numSamples; i++) {
 		q0 = coeff * q1 - q2 + data[i];
@@ -152,14 +165,11 @@ double goertzel(int numSamples, int TARGET_FREQUENCY, int SAMPLING_RATE,
 	result = sqrt(real * real + imag * imag);
 
 	double win = imgToPol(imag, real);
-
 	double dif = fabs(winkel - win);
-//	printf("%lf %lf %lf",dif, winkel,win);
-
+	//printf("%lf %lf %lf\n\r",dif, winkel,win);
 	if (dif < M_PI / 2.0) {
-		result = result * -1.0;
+		return result * -1.0;
 	}
-
 	return result;
 }
 
@@ -212,6 +222,8 @@ void mupePowerServerTask() {
 						&config));
 	}
 
+
+
 	/**
 	 * Definition für die unverzögerte Ausgabe der Werte an Serial
 	 */
@@ -224,17 +236,19 @@ void mupePowerServerTask() {
 		lauf = 0;
 		int last = 0;
 		do {
+			delayMicroseconds(100);
 			adc_oneshot_read(adc1_handle, adcNrArray[numSens], &adcMesswert);
 			lauf++;
-			if (lauf > 100)
+			if (lauf > 100 )
 				break;
 			if (last == adcMesswert)
 				break;
 			last = adcMesswert;
-			delayMicroseconds(100);
-		} while (adcMesswert < 4094 / 2);
+
+		} while (adcMesswert < 1967);
 
 		do {
+			delayMicroseconds(100);
 			adc_oneshot_read(adc1_handle, adcNrArray[numSens], &adcMesswert);
 			lauf++;
 			if (lauf > 200)
@@ -242,8 +256,8 @@ void mupePowerServerTask() {
 			if (last == adcMesswert)
 				break;
 			last = adcMesswert;
-			delayMicroseconds(100);
-		} while (adcMesswert > 4094 / 2);
+
+		} while (adcMesswert > 1967);
 
 		uint64_t dauerDerMessung = esp_timer_get_time();
 		for (int i = 0; i < 256; i++) {
@@ -257,13 +271,19 @@ void mupePowerServerTask() {
 		}
 		dauerDerMessung = esp_timer_get_time() - dauerDerMessung;
 		taskEXIT_CRITICAL(&my_spinlock);
-		printf("lauf %li %i \r\n", lauf, adcMesswert);
+    //    printf("lauf %li %i \r\n", lauf, adcMesswert);
 
 		//	printf("time %"PRId64"\n", dauerDerMessung);
 		if (timerSerialOutput + 1000000 < esp_timer_get_time()) {
+			//(getl(5)>-230)?-230:(-1*fabs(getl(5)))
 
 			printf("AEV_METER %.1lf,%.1lf,%.1lf,%.1lf,%.1lf,%.1lf,%.1lf\r\n",
-					getl(0), getl(1), getl(2), getl(3), getl(4), getl(5),
+					getl(0),
+					getl(1),
+					getl(2),
+					-1*(getl(0)+ getl(1)+getl(2)+getl(4)+((getl(5)>-200)?(-200+150):(getl(5)+150))+getl(6)),
+					getl(4),
+					(getl(5)>-200)?(-200+150):(getl(5)+150),
 					getl(6));
 			timerSerialOutput = timerSerialOutput + 1000000;
 		}
@@ -272,18 +292,19 @@ void mupePowerServerTask() {
 		double winkel = goertzelWinkel(256, 50, freq,
 				messwerteArray[numSens - 1]);
 		for (int c = 0; c < numSens; c++) {
-			adcHistArray[c][positionImBuffer] = goertzel(256, 50, freq,
-					messwerteArray[c], winkel);
-			adcArray[c] = adcHistArray[c][positionImBuffer];
+
+			adcHistArray[c][positionImBuffer] = goertzel(256, 50, freq,messwerteArray[c], winkel);
+
 		}
 		//	printf("\n");
-		vTaskDelay(10);
+		vTaskDelay(20);
 		positionImBuffer++;
 		positionImBuffer =
-				(positionImBuffer < pufferSize) ? positionImBuffer : 0;
+				(positionImBuffer <= pufferSize) ? positionImBuffer : 0;
 	}
 }
 
 void app_main(void) {
 	mupePowerServerTask();
 }
+
